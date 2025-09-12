@@ -8,24 +8,13 @@ import lombok.Data;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String userId;
-
-    @Column()
     private String userName;
-
-
     private String email;
-
-    @Column()
     private String firstName;
-
-    @Column()
     private String lastName;
-    @Column
     private String password;
-
-    @Column
     private String confirmPassword;
 
 }
