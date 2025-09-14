@@ -13,6 +13,7 @@ import java.util.UUID;
 public interface ToDoRepository extends JpaRepository<ToDo, Integer> {
     @Query("SELECT t from todo t where t.user = :user")
     List<ToDo> getAllToDosFromUser(@Param("com/todoApp/dto/user") User user);
+
     @Query("SELECT t from todo t where t.user = :user AND t.todoId = :todoId")
     Optional<ToDo> getToDoById(@Param("com/todoApp/dto/user") User user, @Param("todoId") UUID todoId);
 
