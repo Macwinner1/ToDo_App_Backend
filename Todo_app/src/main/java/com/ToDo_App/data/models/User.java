@@ -1,11 +1,16 @@
 package com.ToDo_App.data.models;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
-@Data
+import java.nio.file.attribute.UserPrincipal;
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
-public class User {
+@Table(name = "todoapp_users")
+@Getter @Setter @ToString @AllArgsConstructor @NoArgsConstructor
+public class User{
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -15,6 +20,8 @@ public class User {
     private String firstName;
     private String lastName;
     private String password;
-    private String confirmPassword;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<ToDo> toDos = new HashSet<>();
 
 }
