@@ -37,7 +37,7 @@ public class IAuthService implements AuthService {
         }
         User user = userMapper.fromRegisterDto(userData, passwordEncoder);
         userRepository.save(user);
-        var jwtToken = ijwtService.generateJwtToken(user);
+        var jwtToken = ijwtService.generateJwtToken(new UserDto());
         return userMapper.toUserDto(user, jwtToken);
 
     }
@@ -48,7 +48,7 @@ public class IAuthService implements AuthService {
                 () -> new UsernameNotFoundException("User not found with username: " + userDto.getUsername())
         );
         boolean passwordMatch = BCrypt.checkpw(user.getPassword(), userDto.getPassword());
-        var jwtToken = ijwtService.generateJwtToken(user);
+        var jwtToken = ijwtService.generateJwtToken(new UserDto());
         return userMapper.toUserDto(user, jwtToken);
     }
 
