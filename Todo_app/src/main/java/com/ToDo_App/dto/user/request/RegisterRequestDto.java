@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-//@PasswordMatches
 @Data
 public class RegisterRequestDto {
     @NotEmpty(message = "Username cannot be empty")
