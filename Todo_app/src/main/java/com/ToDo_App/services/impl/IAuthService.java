@@ -2,58 +2,57 @@ package com.ToDo_App.services.impl;
 
 import com.ToDo_App.data.models.User;
 import com.ToDo_App.data.repository.UserRepository;
-import com.ToDo_App.dto.user.TokenizedUserDto;
 import com.ToDo_App.dto.user.request.LoginRequestDto;
 import com.ToDo_App.dto.user.request.RegisterRequestDto;
-import com.ToDo_App.dto.user.response.UserDto;
-import com.ToDo_App.expections.UserAlreadyExistsException;
-import com.ToDo_App.expections.UsernameNotFoundException;
+import com.ToDo_App.dto.user.UserDto;
+import com.ToDo_App.exceptions.UserAlreadyExistsException;
+import com.ToDo_App.exceptions.UserNotAuthenticatedException;
+import com.ToDo_App.exceptions.UsernameNotFoundException;
 import com.ToDo_App.services.AuthService;
 import com.ToDo_App.utils.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCrypt;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class IAuthService implements AuthService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final IJWTService ijwtService;
-    private final UserMapper userMapper;
+    private final BCrypt bCrypt = new BCrypt();
 
     @Autowired
-    public IAuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, IJWTService ijwtService, UserMapper userMapper) {
+    public IAuthService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.ijwtService = ijwtService;
-        this.userMapper = userMapper;
     }
+
     @Override
-    public TokenizedUserDto registerUser(RegisterRequestDto userData) {
+    public UserDto registerUser(RegisterRequestDto userData) {
         if(checkUserExists(userData.getUsername(), userData.getEmail())) {
             throw new UserAlreadyExistsException("A user with this Username or email already exists.");
         }
-        User user = userMapper.fromRegisterDto(userData, passwordEncoder);
+        User user = UserMapper.mapToUser(userData, new User(), bCrypt);
         userRepository.save(user);
-        var jwtToken = ijwtService.generateJwtToken(new UserDto());
-        return userMapper.toUserDto(user, jwtToken);
+        return UserMapper.mapToUserDto(user);
 
     }
 
     @Override
-    public TokenizedUserDto loginUser(LoginRequestDto userDto){
+    public UserDto loginUser(LoginRequestDto userDto){
         User user = userRepository.findByUsername(userDto.getUsername()).orElseThrow(
                 () -> new UsernameNotFoundException("User not found with username: " + userDto.getUsername())
         );
-        boolean passwordMatch = BCrypt.checkpw(user.getPassword(), userDto.getPassword());
-        var jwtToken = ijwtService.generateJwtToken(new UserDto());
-        return userMapper.toUserDto(user, jwtToken);
+        boolean passwordMatch = BCrypt.checkpw(userDto.getPassword(), user.getPassword());
+        if(!passwordMatch) {
+            throw new UserNotAuthenticatedException("A user with this Username or email already exists.");
+        }
+        return UserMapper.mapToUserDto(user);
     }
 
     @Override
     public boolean checkUserExists(String username, String email) {
         return userRepository.findByUsernameOrEmail(username, email).isPresent();
     }
+
 }
