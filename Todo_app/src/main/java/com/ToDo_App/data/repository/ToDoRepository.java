@@ -10,14 +10,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ToDoRepository extends JpaRepository<ToDo, Integer> {
-    @Query("SELECT t from todo t where t.user = :user")
+public interface ToDoRepository extends JpaRepository<ToDo, UUID> {
+    @Query("SELECT t from ToDo t where t.user = :user")
     List<ToDo> getAllToDosFromUser(@Param("com/todoApp/dto/user") User user);
 
-    @Query("SELECT t from todo t where t.user = :user AND t.todoId = :todoId")
+    @Query("SELECT t from ToDo t where t.user = :user AND t.todoId = :todoId")
     Optional<ToDo> getToDoById(@Param("com/todoApp/dto/user") User user, @Param("todoId") UUID todoId);
 
-    @Query("SELECT t FROM todo t WHERE t.user = :user AND " +
+    @Query("SELECT t FROM ToDo t WHERE t.user = :user AND " +
             "((t.isCompleted = :completed) OR (LOWER(t.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
             "OR LOWER(t.memo) LIKE LOWER(CONCAT('%', :searchTerm, '%'))))")
     List<ToDo> searchTodos(

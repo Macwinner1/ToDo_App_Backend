@@ -7,10 +7,10 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Entity(name = "com/todoApp/dto/todo")
+@Entity
 @Data
 @EqualsAndHashCode(callSuper=false)
-@Table(name = "todonote_todo")
+@Table(name = "Todo")
 public class ToDo extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
