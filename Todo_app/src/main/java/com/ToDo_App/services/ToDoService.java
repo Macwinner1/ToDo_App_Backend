@@ -13,7 +13,7 @@ public interface ToDoService {
 
     ToDoDto fetchToDoById(User user, UUID todoId);
 
-    ToDoDto createToDo(ToDoCreateOrUpdateRequestDto toDoDto);
+    ToDoDto createToDo(ToDoCreateOrUpdateRequestDto toDoDto, User user);
 
     ToDoDto updateToDo(UUID todoId, ToDoCreateOrUpdateRequestDto toDoDto, HttpSession httpSession);
 
