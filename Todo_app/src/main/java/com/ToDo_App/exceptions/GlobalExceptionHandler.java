@@ -1,4 +1,4 @@
-package com.ToDo_App.expections;
+package com.ToDo_App.exceptions;
 
 import com.ToDo_App.dto.ErrorResponseDto;
 import org.springframework.http.HttpHeaders;
