@@ -1,26 +1,62 @@
 package com.ToDo_App.utils.mapper;
 
 import com.ToDo_App.data.models.User;
-import com.ToDo_App.dto.token.TokenDto;
-import com.ToDo_App.dto.user.TokenizedUserDto;
 import com.ToDo_App.dto.user.request.RegisterRequestDto;
-import com.ToDo_App.dto.user.response.UserDto;
+import com.ToDo_App.dto.user.UserDto;
 import org.mapstruct.Mapper;
 import org.springframework.security.crypto.bcrypt.BCrypt;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
 
-@Mapper(componentModel = "spring")
-public interface UserMapper {
-    User fromUserDto(UserDto userDto);
-    TokenizedUserDto toUserDto(User user, TokenDto tokenDto);
 
-    default User fromRegisterDto(RegisterRequestDto registerRequestDto, PasswordEncoder passwordEncoder) {
+//@Mapper(componentModel = "spring")
+@Component
+public class UserMapper {
+
+    public static UserDto mapToUserDto(User user)
+    {
+        UserDto userDto = new UserDto();
+        userDto.setUsername(user.getUserName());
+        userDto.setFirstName(user.getFirstName());
+        userDto.setLastName(user.getLastName());
+        userDto.setUserId(user.getUserId());
+        userDto.setEmail(user.getEmail());
+
+        return userDto;
+    }
+
+    public static User mapToUser(
+            UserDto userDto
+    ){
         User user = new User();
-        user.setUserName(registerRequestDto.getUsername());
-        user.setFirstName(registerRequestDto.getFirstName());
-        user.setLastName(registerRequestDto.getLastName());
-        user.setPassword(BCrypt.hashpw(registerRequestDto.getPassword(), BCrypt.gensalt(12)));
-        user.setEmail(registerRequestDto.getEmail());
+        user.setUserName(userDto.getUsername());
+        user.setEmail(userDto.getEmail());
+        user.setFirstName(userDto.getFirstName());
+        user.setLastName(userDto.getLastName());
+
+        return user;
+    }
+
+    public static UserDto mapsToUserDto(
+            User user
+    ){
+        UserDto userDto = new UserDto();
+        userDto.setUsername(user.getUserName());
+        userDto.setEmail(user.getEmail());
+        userDto.setFirstName(user.getFirstName());
+        userDto.setLastName(user.getLastName());
+
+        return userDto;
+    }
+
+    public static User mapToUsers(
+            RegisterRequestDto userDto, User user, BCrypt bCrypt
+    ){
+
+        user.setUserName(userDto.getUsername());
+        user.setFirstName(userDto.getFirstName());
+        user.setLastName(userDto.getLastName());
+        user.setEmail(userDto.getEmail());
+        user.setPassword(BCrypt.hashpw(userDto.getPassword(), BCrypt.gensalt(12)));
         return user;
     }
 }

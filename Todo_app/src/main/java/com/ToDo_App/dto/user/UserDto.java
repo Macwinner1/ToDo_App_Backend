@@ -1,13 +1,17 @@
-package com.ToDo_App.dto.user.response;
+package com.ToDo_App.dto.user;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
+import lombok.*;
 
 import java.util.UUID;
 
 @Data
+@Getter
+@Setter
+@ToString
+@AllArgsConstructor @NoArgsConstructor
 public class UserDto {
 
     private UUID userId;
@@ -25,4 +29,5 @@ public class UserDto {
     @NotEmpty(message = "Email cannot be empty")
     @Email(message = "Invalid email format")
     private String email;
+
 }
