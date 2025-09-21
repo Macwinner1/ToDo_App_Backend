@@ -63,22 +63,25 @@ public class ToDoController {
     }
 
     @PostMapping("/todo/create")
-    public ResponseEntity<ToDoResponseDto> createToDo(@Valid @RequestBody ToDoCreateOrUpdateRequestDto toDoCreateOrUpdateRequestDto) {
-        ToDoDto todo = toDoService.createToDo(toDoCreateOrUpdateRequestDto);
-        return ResponseEntity.status(
-                HttpStatus.CREATED
-        ).body(
-                new ToDoResponseDto(
-                        HttpStatus.CREATED,
-                        "ToDo Created Successfully",
-                        todo
-                )
-        );
+    public ResponseEntity<ToDoResponseDto> createToDo(
+            @Valid @RequestBody ToDoCreateOrUpdateRequestDto toDoCreateOrUpdateRequestDto,
+            HttpSession session) {
+
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ToDoResponseDto(HttpStatus.UNAUTHORIZED, "User not authenticated", null));
+        }
+
+        ToDoDto todo = toDoService.createToDo(toDoCreateOrUpdateRequestDto, user);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ToDoResponseDto(HttpStatus.CREATED, "ToDo Created Successfully", todo));
     }
 
+
     @PutMapping("/{toDoId}")
-    public ResponseEntity<ToDoResponseDto> updateToDo(@PathVariable UUID toDoId, @Valid @RequestBody UUID todoId, ToDoCreateOrUpdateRequestDto toDoDto, HttpSession httpSession) {
-        ToDoDto toDo = toDoService.updateToDo(todoId, toDoDto, httpSession);
+    public ResponseEntity<ToDoResponseDto> updateToDo(@PathVariable UUID toDoId, @Valid @RequestBody ToDoCreateOrUpdateRequestDto toDoDto, HttpSession httpSession) {
+        ToDoDto toDo = toDoService.updateToDo(toDoId, toDoDto, httpSession);
         return ResponseEntity.status(
                 HttpStatus.OK
         ).body(
@@ -94,9 +97,9 @@ public class ToDoController {
     public ResponseEntity<BaseResponseDto> deleteToDo(@PathVariable UUID toDoId, HttpSession httpSession){
         boolean isDeleted = toDoService.deleteToDo(toDoId, httpSession);
         if(isDeleted){
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
+            return ResponseEntity.status(HttpStatus.OK).body(
                     new BaseResponseDto(
-                            HttpStatus.NO_CONTENT,
+                            HttpStatus.OK,
                             "ToDo Deleted Successfully"
                     )
             );
