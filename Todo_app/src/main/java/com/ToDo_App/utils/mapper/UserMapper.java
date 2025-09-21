@@ -3,7 +3,6 @@ package com.ToDo_App.utils.mapper;
 import com.ToDo_App.data.models.User;
 import com.ToDo_App.dto.user.request.RegisterRequestDto;
 import com.ToDo_App.dto.user.UserDto;
-import org.mapstruct.Mapper;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Component;
 
