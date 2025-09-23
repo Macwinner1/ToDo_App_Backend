@@ -14,8 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
 public class IAuthService implements AuthService {
 
@@ -32,7 +30,7 @@ public class IAuthService implements AuthService {
         if(checkUserExists(userData.getUsername(), userData.getEmail())) {
             throw new UserAlreadyExistsException("A user with this Username or email already exists.");
         }
-        User user = UserMapper.mapToUser(userData, new User(), bCrypt);
+        User user = UserMapper.mapToUsers(userData, new User(), bCrypt);
         userRepository.save(user);
         return UserMapper.mapToUserDto(user);
 
@@ -47,12 +45,20 @@ public class IAuthService implements AuthService {
         if(!passwordMatch) {
             throw new UserNotAuthenticatedException("A user with this Username or email already exists.");
         }
-        return UserMapper.mapToUserDto(user);
+        return UserMapper.mapsToUserDto(user);
     }
 
     @Override
     public boolean checkUserExists(String username, String email) {
         return userRepository.findByUsernameOrEmail(username, email).isPresent();
     }
+
+    @Override
+    public User getUserEntity(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+    }
+
+
 
 }
