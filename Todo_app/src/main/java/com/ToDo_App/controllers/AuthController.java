@@ -5,6 +5,7 @@ import com.ToDo_App.data.models.User;
 import com.ToDo_App.dto.user.UserDto;
 import com.ToDo_App.dto.user.request.LoginRequestDto;
 import com.ToDo_App.dto.user.request.RegisterRequestDto;
+import com.ToDo_App.exceptions.UserAlreadyExistsException;
 import com.ToDo_App.exceptions.UserNotAuthenticatedException;
 import com.ToDo_App.services.AuthService;
 import com.ToDo_App.utils.mapper.UserMapper;
@@ -13,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+
 
 @RestController
 @RequestMapping("/api/v1")
@@ -42,14 +45,17 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody RegisterRequestDto request, HttpSession session) {
-        UserDto isRegistered = authService.registerUser(request);
-        if (isRegistered != null) {
+        try {
+            UserDto isRegistered = authService.registerUser(request);
             session.setAttribute("user", request.getUsername());
             return ResponseEntity.ok("User registered and session started.");
-        } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Registration failed.");
+        } catch (UserAlreadyExistsException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+
 
     @GetMapping("/me")
     public ResponseEntity<?> getAuthenticatedUser(HttpSession session) {
