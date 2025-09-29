@@ -1,5 +1,6 @@
 package com.ToDo_App.exceptions;
 
+import com.ToDo_App.dto.BaseResponseDto;
 import com.ToDo_App.dto.ErrorResponseDto;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -98,4 +99,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         error.put("message", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
+
+    @ExceptionHandler(UnauthorizedActionException.class)
+    public ResponseEntity<BaseResponseDto> handleUnauthorized(UnauthorizedActionException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new BaseResponseDto(HttpStatus.FORBIDDEN, ex.getMessage()));
+    }
+
 }
