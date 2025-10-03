@@ -14,8 +14,13 @@ public class ToDoCreateOrUpdateRequestDto {
     @NotEmpty(message = "Title cannot be empty")
     private String title;
 
-    @Size(max = 2048, message = "The length  of the memo should be less than 2048")
-    private String memo;
+    @Size(max = 2048, message = "The length  of the description should be less than 2048")
+    private String description;
 
-    private boolean isImportant;
+    private boolean completed;
+
+    private String priority;
+
+    private String dueDate;
 }
+
