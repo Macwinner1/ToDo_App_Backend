@@ -12,21 +12,26 @@ import java.util.UUID;
 @Data
 @EqualsAndHashCode(callSuper=false)
 @Table(name = "Todo")
-public class ToDo extends BaseEntity{
+public class ToDo {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
     private UUID todoId;
 
     private String title;
-    @Column(name = "memo", length = 2048)
-    private String memo;
-    private boolean isCompleted;
-    private boolean isImportant;
-    private LocalDateTime completedAt;
+    @Column(name = "description", length = 2048)
+    private String description;
+
+    @Column(name = "completed", nullable = false)
+    private boolean completed;
+
+    @Column(name = "priority")
+    private String priority;
+    private String dueDate;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
     @JsonIgnore
     private User user;
 }
+
