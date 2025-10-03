@@ -10,8 +10,8 @@ public class ToDoDto {
     private UUID todoId;
 
     private String title;
-    private String memo;
-    private boolean isCompleted;
-    private boolean isImportant;
-    private LocalDateTime completedAt;
+    private String description;
+    private boolean completed;
+    private String priority;
+    private String dueDate;
 }
