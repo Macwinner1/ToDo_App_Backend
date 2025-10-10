@@ -1,37 +1,43 @@
 package com.ToDo_App.data.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
+@Table(name = "todo")
 @Data
-@EqualsAndHashCode(callSuper=false)
-@Table(name = "Todo")
 public class ToDo {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id")
-    private UUID todoId;
+    private UUID toDoId;
 
+    @NotNull(message = "Title cannot be null")
+    @Size(min = 2, max = 255, message = "Title must be between 2 and 255 characters")
     private String title;
-    @Column(name = "description", length = 2048)
+
+    @Size(max = 2048, message = "Description must be less than 2048 characters")
     private String description;
 
-    @Column(name = "completed", nullable = false)
     private boolean completed;
 
-    @Column(name = "priority")
-    private String priority;
-    private String dueDate;
+    @NotNull(message = "Priority cannot be null")
+    @Enumerated(EnumType.STRING)
+    private Priority priority;
 
-    @ManyToOne
+    private LocalDateTime dueDate;
+
+    private LocalDateTime createdAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    @JsonIgnore
     private User user;
-}
 
+    public enum Priority {
+        LOW, MEDIUM, HIGH
+    }
+}

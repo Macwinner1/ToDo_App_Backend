@@ -8,13 +8,14 @@ import lombok.Data;
 @Data
 public class RegisterRequestDto {
     @NotEmpty(message = "Username cannot be empty")
-    @Size(min = 4, message = "The length of the username should be atleast 4")
+    @Size(min = 4, message = "The length of the username should be at least 4")
     private String username;
 
-    @NotEmpty(message = "First Name cannot br empty")
-    @Size(min = 2, message = "The length of the first name should be atleast 2")
+    @NotEmpty(message = "First Name cannot be empty")
+    @Size(min = 2, message = "The length of the first name should be at least 2")
     private String firstName;
 
+    @Size(min = 2, message = "The length of the last name should be at least 2")
     private String lastName;
 
     @NotEmpty(message = "Email cannot be empty")
@@ -22,6 +23,6 @@ public class RegisterRequestDto {
     private String email;
 
     @NotEmpty(message = "Password cannot be empty")
-    @Size(min = 8, message = "Password should be minimum of 8 characters")
+    @Size(min = 8, message = "Password should be at least 8 characters")
     private String password;
 }

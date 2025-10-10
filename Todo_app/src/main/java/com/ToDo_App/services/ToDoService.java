@@ -1,27 +1,19 @@
 package com.ToDo_App.services;
 
-import com.ToDo_App.data.models.User;
-import com.ToDo_App.dto.todo.ToDoDto;
 import com.ToDo_App.dto.todo.request.ToDoCreateOrUpdateRequestDto;
+import com.ToDo_App.dto.todo.response.ListToDoResponseDto;
+import com.ToDo_App.dto.todo.response.StatsResponseDto;
+import com.ToDo_App.dto.todo.response.ToDoResponseDto;
 import jakarta.servlet.http.HttpSession;
 
-import java.util.List;
-import java.util.UUID;
-
 public interface ToDoService {
-    List<ToDoDto> fetchAllToDos(User user);
-
-    ToDoDto fetchToDoById(User user, UUID todoId);
-
-    ToDoDto createToDo(ToDoCreateOrUpdateRequestDto toDoDto, User user);
-
-    ToDoDto updateToDo(UUID todoId, ToDoCreateOrUpdateRequestDto toDoDto, HttpSession httpSession);
-
-    boolean deleteToDo(UUID todoId, HttpSession httpSession);
-
-    ToDoDto markAsCompleted(UUID todoId, HttpSession httpSession);
-
-    ToDoDto markAsIncomplete(UUID todoId, HttpSession httpSession);
-
-    List<ToDoDto> searchToDos(String searchTerm, boolean completed, HttpSession httpSession);
+    ToDoResponseDto createToDo(ToDoCreateOrUpdateRequestDto toDoCreateOrUpdateRequestDto, HttpSession session);
+    ToDoResponseDto updateToDo(String toDoId, ToDoCreateOrUpdateRequestDto toDoCreateOrUpdateRequestDto, HttpSession session);
+    ToDoResponseDto fetchToDoById(String toDoId, HttpSession session);
+    ListToDoResponseDto fetchAllToDos(HttpSession session);
+    ListToDoResponseDto searchTodos(Boolean completed, String keyword, HttpSession session);
+    ToDoResponseDto completeToDo(String toDoId, HttpSession session);
+    ToDoResponseDto incompleteToDo(String toDoId, HttpSession session);
+    void deleteToDo(String toDoId, HttpSession session);
+    StatsResponseDto getTodoStats(HttpSession session);
 }

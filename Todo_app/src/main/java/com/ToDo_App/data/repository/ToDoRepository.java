@@ -1,27 +1,22 @@
 package com.ToDo_App.data.repository;
 
+
 import com.ToDo_App.data.models.ToDo;
 import com.ToDo_App.data.models.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public interface ToDoRepository extends JpaRepository<ToDo, UUID> {
-    @Query("SELECT t from ToDo t where t.user = :user")
-    List<ToDo> getAllToDosFromUser(@Param("com/todoApp/dto/user") User user);
+    List<ToDo> findByUserAndCompleted(User user, Boolean completed);
+    List<ToDo> findByUser(User user);
 
-    @Query("SELECT t from ToDo t where t.user = :user AND t.todoId = :todoId")
-    Optional<ToDo> getToDoById(@Param("com/todoApp/dto/user") User user, @Param("todoId") UUID todoId);
+    @Query("SELECT t FROM ToDo t WHERE t.user = :user AND (:completed IS NULL OR t.completed = :completed) AND (:keyword IS NULL OR t.title LIKE %:keyword%)")
+    List<ToDo> searchTodos(User user, Boolean completed, String keyword);
 
-    @Query("SELECT t FROM ToDo t WHERE t.user = :user AND " +
-            "((t.isCompleted = :completed) OR (LOWER(t.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
-            "OR LOWER(t.memo) LIKE LOWER(CONCAT('%', :searchTerm, '%'))))")
-    List<ToDo> searchTodos(
-            @Param("com/todoApp/dto/user") User user,
-            @Param("searchTerm") String searchTerm,
-            @Param("completed") boolean completed);
+    long countByUser(User user);
+    long countByUserAndCompleted(User user, boolean completed);
+    long countByUserAndPriority(User user, ToDo.Priority priority);
 }

@@ -12,10 +12,8 @@ import org.springframework.http.HttpStatus;
 @EqualsAndHashCode(callSuper=true)
 @AllArgsConstructor
 public class UserResponseDto extends BaseResponseDto {
-    private UserDto data;
 
     public UserResponseDto(HttpStatus statusCode, String statusMessage, UserDto data) {
-        super(statusCode,statusMessage);
-        this.data = data;
+        super(statusCode,statusMessage, data);
     }
 }
