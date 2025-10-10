@@ -3,53 +3,37 @@ package com.ToDo_App.utils.mapper;
 import com.ToDo_App.data.models.ToDo;
 import com.ToDo_App.dto.todo.ToDoDto;
 import com.ToDo_App.dto.todo.request.ToDoCreateOrUpdateRequestDto;
-import org.mapstruct.Mapper;
 import org.springframework.stereotype.Component;
 
-//@Mapper(componentModel = "spring")
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 @Component
 public class ToDoMapper {
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
-    public ToDoDto toToDoDto(ToDo toDo){
-        ToDoDto  toDoDto = new ToDoDto();
+    public ToDoDto toToDoDto(ToDo toDo) {
+        ToDoDto toDoDto = new ToDoDto();
+        toDoDto.setTodoId(toDo.getToDoId());
         toDoDto.setTitle(toDo.getTitle());
-        toDoDto.setTodoId(toDo.getTodoId());
-        toDoDto.setMemo(toDo.getMemo());
+        toDoDto.setDescription(toDo.getDescription());
         toDoDto.setCompleted(toDo.isCompleted());
-        toDoDto.setImportant(toDo.isImportant());
-        toDoDto.setCompletedAt(toDo.getCompletedAt());
-
+        toDoDto.setPriority(toDo.getPriority().name());
+        toDoDto.setDueDate(toDo.getDueDate());
+        toDoDto.setCreatedAt(toDo.getCreatedAt());
         return toDoDto;
-
     }
 
-    public static ToDo mapFromToDoDtoToToDo(
-            ToDoDto toDoDto
-    ){
+    public ToDo toToDo(ToDoCreateOrUpdateRequestDto requestDto) {
         ToDo toDo = new ToDo();
-        toDo.setTitle(toDoDto.getTitle());
-        toDo.setMemo(toDoDto.getMemo());
-        toDo.setTodoId(toDoDto.getTodoId());
-        toDo.setCompletedAt(toDoDto.getCompletedAt());
-
-        return toDo;
-    }
-
-
-    public static ToDo fromToDoCreateOrUpdateDto(ToDoCreateOrUpdateRequestDto request){
-        ToDo toDo = new ToDo();
-        toDo.setTitle(request.getTitle());
-        toDo.setMemo(request.getMemo());
-        toDo.setCompleted(false);
-        toDo.setImportant(request.isImportant());
-
-        return toDo;
-    }
-    public static ToDo fromToDoCreateOrUpdateRequestDto(ToDoCreateOrUpdateRequestDto toDoDto, ToDo toDo){
-        toDo.setTitle(toDoDto.getTitle());
-        toDo.setMemo(toDoDto.getMemo());
-        toDo.setImportant(toDoDto.isImportant());
-
+        toDo.setTitle(requestDto.getTitle());
+        toDo.setDescription(requestDto.getDescription());
+        toDo.setCompleted(requestDto.isCompleted());
+        toDo.setPriority(ToDo.Priority.valueOf(requestDto.getPriority()));
+        if (requestDto.getDueDate() != null) {
+            toDo.setDueDate(LocalDateTime.parse(requestDto.getDueDate(), FORMATTER));
+        }
+        toDo.setCreatedAt(LocalDateTime.now());
         return toDo;
     }
 }
