@@ -8,10 +8,10 @@ import java.util.UUID;
 @Data
 public class ToDoDto {
     private UUID todoId;
-
     private String title;
     private String description;
     private boolean completed;
     private String priority;
-    private String dueDate;
+    private LocalDateTime dueDate;
+    private LocalDateTime createdAt;
 }
