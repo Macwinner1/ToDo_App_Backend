@@ -1,75 +1,50 @@
 package com.ToDo_App.controllers;
 
-
-import com.ToDo_App.data.models.User;
+import com.ToDo_App.dto.BaseResponseDto;
 import com.ToDo_App.dto.user.UserDto;
 import com.ToDo_App.dto.user.request.LoginRequestDto;
 import com.ToDo_App.dto.user.request.RegisterRequestDto;
-import com.ToDo_App.exceptions.UserAlreadyExistsException;
 import com.ToDo_App.exceptions.UserNotAuthenticatedException;
 import com.ToDo_App.services.AuthService;
-import com.ToDo_App.utils.mapper.UserMapper;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-
-
+@CrossOrigin(origins = "http://127.0.0.1:5500", allowCredentials = "true")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
 
-    private final UserMapper userMapper;
-
-    @Autowired
-    public AuthController(AuthService authService, UserMapper userMapper) {
-        this.authService = authService;
-        this.userMapper = userMapper;
-    }
-
     @PostMapping("/login")
-    public ResponseEntity<String> loginUser(@RequestBody LoginRequestDto request, HttpSession session) {
-        UserDto userDetails = authService.loginUser(request);
-        if (userDetails != null) {
-            User user = authService.getUserEntity(request.getUsername());
-            session.setAttribute("user", user);
-            return ResponseEntity.ok("Login successful. Session started.");
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials.");
-        }
+    public BaseResponseDto login(@Valid @RequestBody LoginRequestDto loginRequestDto, HttpSession session) {
+        UserDto userDto = authService.loginUser(loginRequestDto, session);
+        return new BaseResponseDto(HttpStatus.OK, "Login successful", userDto);
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody RegisterRequestDto request, HttpSession session) {
-        try {
-            UserDto isRegistered = authService.registerUser(request);
-            session.setAttribute("user", request.getUsername());
-            return ResponseEntity.ok("User registered and session started.");
-        } catch (UserAlreadyExistsException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+    public BaseResponseDto register(@Valid @RequestBody RegisterRequestDto registerRequestDto, HttpSession session) {
+        UserDto userDto = authService.registerUser(registerRequestDto, session);
+        return new BaseResponseDto(HttpStatus.CREATED, "Registration successful", userDto);
     }
-
 
     @GetMapping("/me")
-    public ResponseEntity<?> getAuthenticatedUser(HttpSession session) {
-        User user = (User) session.getAttribute("user");
-        if (user == null) {
-            throw new UserNotAuthenticatedException("User not logged in");
+    public BaseResponseDto getCurrentUser(HttpSession session) {
+        try {
+            UserDto userDto = authService.getAuthenticatedUser(session);
+            return new BaseResponseDto(HttpStatus.OK, "User fetched successfully", userDto);
+        } catch (UserNotAuthenticatedException e) {
+            throw new UserNotAuthenticatedException("User not authenticated");
         }
-        return ResponseEntity.ok(user.getUserName() + " is logged in");
     }
 
-
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(HttpSession session) {
-        session.invalidate();
-        return ResponseEntity.ok("Session ended. Logged out.");
+    public BaseResponseDto logout(HttpSession session) {
+        authService.logout(session);
+        return new BaseResponseDto(HttpStatus.OK, "Logout successful", null);
     }
 }
