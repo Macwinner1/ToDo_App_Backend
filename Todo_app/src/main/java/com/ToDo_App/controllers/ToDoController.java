@@ -1,26 +1,21 @@
 package com.ToDo_App.controllers;
 
-import com.ToDo_App.data.models.User;
 import com.ToDo_App.dto.BaseResponseDto;
-import com.ToDo_App.dto.todo.ToDoDto;
 import com.ToDo_App.dto.todo.request.ToDoCreateOrUpdateRequestDto;
 import com.ToDo_App.dto.todo.response.ListToDoResponseDto;
+import com.ToDo_App.dto.todo.response.StatsResponseDto;
 import com.ToDo_App.dto.todo.response.ToDoResponseDto;
 import com.ToDo_App.services.ToDoService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.UUID;
-
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api")
+@CrossOrigin(originPatterns = "http://localhost:*", allowCredentials = "true")
 public class ToDoController {
-
     private final ToDoService toDoService;
 
     @Autowired
@@ -28,116 +23,49 @@ public class ToDoController {
         this.toDoService = toDoService;
     }
 
-    @GetMapping("/")
-    public ResponseEntity<?> fetchAllToDos(HttpSession session) {
-        User user = (User) session.getAttribute("user");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new BaseResponseDto(HttpStatus.UNAUTHORIZED, "Not Logged in"));
-        }
-        List<ToDoDto> toDos = toDoService.fetchAllToDos(user);
-        return ResponseEntity.ok(new ListToDoResponseDto(HttpStatus.OK, "All Todos fetched successfully", toDos));
+    @PostMapping("/create")
+    public ToDoResponseDto createToDo(@Valid @RequestBody ToDoCreateOrUpdateRequestDto toDoCreateOrUpdateRequestDto, HttpSession session) {
+        return toDoService.createToDo(toDoCreateOrUpdateRequestDto, session);
+    }
+
+    @PutMapping("/update/{todoId}")
+    public ToDoResponseDto updateToDo(@PathVariable String todoId, @Valid @RequestBody ToDoCreateOrUpdateRequestDto toDoCreateOrUpdateRequestDto, HttpSession session) {
+        return toDoService.updateToDo(todoId, toDoCreateOrUpdateRequestDto, session);
     }
 
     @GetMapping("/{todoId}")
-    public ResponseEntity<?> fetchTodoById(@PathVariable UUID todoId, HttpSession session) {
-        User user = (User) session.getAttribute("user");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new BaseResponseDto(HttpStatus.UNAUTHORIZED, "Not Logged in"));
-        }
-        ToDoDto toDo = toDoService.fetchToDoById(user, todoId);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new ToDoResponseDto(HttpStatus.OK, "ToDo Fetched Successfully", toDo));
+    public ToDoResponseDto getToDoById(@PathVariable String todoId, HttpSession session) {
+        return toDoService.fetchToDoById(todoId, session);
     }
 
-    @PostMapping("/todo/create")
-    public ResponseEntity<?> createToDo(
-            @Valid @RequestBody ToDoCreateOrUpdateRequestDto toDoCreateOrUpdateRequestDto,
-            HttpSession session) {
-
-        User user = (User) session.getAttribute("user");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ToDoResponseDto(HttpStatus.UNAUTHORIZED, "User not authenticated", null));
-        }
-
-        ToDoDto todo = toDoService.createToDo(toDoCreateOrUpdateRequestDto, user);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ToDoResponseDto(HttpStatus.CREATED, "ToDo Created Successfully", todo));
-    }
-
-    @PutMapping("/{toDoId}")
-    public ResponseEntity<?> updateToDo(
-            @PathVariable UUID toDoId,
-            @Valid @RequestBody ToDoCreateOrUpdateRequestDto toDoDto,
-            HttpSession httpSession) {
-
-        User user = (User) httpSession.getAttribute("user");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new BaseResponseDto(HttpStatus.UNAUTHORIZED, "Not Logged in"));
-        }
-
-        ToDoDto toDo = toDoService.updateToDo(toDoId, toDoDto, httpSession);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new ToDoResponseDto(HttpStatus.OK, "ToDo Updated Successfully", toDo));
-    }
-
-    @DeleteMapping("/{toDoId}")
-    public ResponseEntity<BaseResponseDto> deleteToDo(@PathVariable UUID toDoId, HttpSession session) {
-        User user = (User) session.getAttribute("user");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new BaseResponseDto(HttpStatus.UNAUTHORIZED, "Not Logged in"));
-        }
-
-        boolean isDeleted = toDoService.deleteToDo(toDoId, session);
-        if (isDeleted) {
-            return ResponseEntity.ok(new BaseResponseDto(HttpStatus.OK, "ToDo Deleted Successfully"));
-        }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new BaseResponseDto(HttpStatus.BAD_REQUEST, "ToDo Deleted Unsuccessfully."));
-    }
-
-    @PatchMapping("/{toDoId}/complete")
-    public ResponseEntity<?> markAsCompleted(@PathVariable UUID toDoId, HttpSession httpSession) {
-        User user = (User) httpSession.getAttribute("user");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new BaseResponseDto(HttpStatus.UNAUTHORIZED, "Not Logged in"));
-        }
-
-        ToDoDto toDo = toDoService.markAsCompleted(toDoId, httpSession);
-        return ResponseEntity.ok(new ToDoResponseDto(HttpStatus.OK, "ToDo marked as completed", toDo));
-    }
-
-    @PatchMapping("/{toDoId}/incomplete")
-    public ResponseEntity<?> markAsIncomplete(@PathVariable UUID toDoId, HttpSession httpSession) {
-        User user = (User) httpSession.getAttribute("user");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new BaseResponseDto(HttpStatus.UNAUTHORIZED, "Not Logged in"));
-        }
-
-        ToDoDto toDo = toDoService.markAsIncomplete(toDoId, httpSession);
-        return ResponseEntity.ok(new ToDoResponseDto(HttpStatus.OK, "ToDo marked as incomplete", toDo));
+    @GetMapping("/todos")
+    public ListToDoResponseDto getAllToDos(HttpSession session) {
+        return toDoService.fetchAllToDos(session);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<?> searchTodos(
-            @RequestParam(required = false, defaultValue = "") String searchTerm,
-            @RequestParam(required = false, defaultValue = "false") Boolean completed,
-            HttpSession httpSession) {
+    public ListToDoResponseDto searchTodos(@RequestParam(required = false) Boolean completed, @RequestParam(required = false) String keyword, HttpSession session) {
+        return toDoService.searchTodos(completed, keyword, session);
+    }
 
-        User user = (User) httpSession.getAttribute("user");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new BaseResponseDto(HttpStatus.UNAUTHORIZED, "Not Logged in"));
-        }
+    @PatchMapping("/{todoId}/complete")
+    public ToDoResponseDto completeToDo(@PathVariable String todoId, HttpSession session) {
+        return toDoService.completeToDo(todoId, session);
+    }
 
-        List<ToDoDto> todos = toDoService.searchToDos(searchTerm, completed, httpSession);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new ListToDoResponseDto(HttpStatus.OK, "ToDos retrieved", todos));
+    @PatchMapping("/{todoId}/incomplete")
+    public ToDoResponseDto incompleteToDo(@PathVariable String todoId, HttpSession session) {
+        return toDoService.incompleteToDo(todoId, session);
+    }
+
+    @DeleteMapping("/delete/{todoId}")
+    public BaseResponseDto deleteToDo(@PathVariable String todoId, HttpSession session) {
+        toDoService.deleteToDo(todoId, session);
+        return new BaseResponseDto(HttpStatus.OK, "ToDo deleted successfully", null);
+    }
+
+    @GetMapping("/stats")
+    public StatsResponseDto getTodoStats(HttpSession session) {
+        return toDoService.getTodoStats(session);
     }
 }
