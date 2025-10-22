@@ -5,17 +5,22 @@ import com.ToDo_App.data.repository.UserRepository;
 import com.ToDo_App.dto.user.UserDto;
 import com.ToDo_App.dto.user.request.LoginRequestDto;
 import com.ToDo_App.dto.user.request.RegisterRequestDto;
+import com.ToDo_App.exceptions.FieldCantBeEmpty;
 import com.ToDo_App.exceptions.UserAlreadyExistsException;
+import com.ToDo_App.exceptions.UserNotAuthenticatedException;
 import com.ToDo_App.exceptions.UsernameNotFoundException;
 import com.ToDo_App.services.AuthService;
 import com.ToDo_App.utils.mapper.UserMapper;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -23,9 +28,10 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final HttpSession httpSession;
 
     @Override
-    public UserDto loginUser(LoginRequestDto loginRequestDto, HttpSession session) {
+    public UserDto loginUser(LoginRequestDto loginRequestDto) {
         Optional<User> userOptional = userRepository.findByUsername(loginRequestDto.getUsername());
         if (userOptional.isEmpty()) {
             throw new UsernameNotFoundException("User not found with username: " + loginRequestDto.getUsername());
@@ -34,21 +40,24 @@ public class AuthServiceImpl implements AuthService {
         if (!passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
             throw new UsernameNotFoundException("Invalid password");
         }
-        session.setAttribute("userId", user.getUserId().toString());
-        session.setAttribute("username", user.getUsername());
+        httpSession.setAttribute("user", user);
         return userMapper.toUserDto(user);
     }
 
     @Override
-    public UserDto registerUser(RegisterRequestDto registerRequestDto, HttpSession session) {
+    public UserDto registerUser(RegisterRequestDto registerRequestDto) {
+        if(registerRequestDto.getUsername().trim().isEmpty() || registerRequestDto.getFirstName().trim().isEmpty() || registerRequestDto.getLastName().trim().isEmpty() ) {
+            throw new FieldCantBeEmpty("field cannot be empty");
+        }
+
         if (checkUserExists(registerRequestDto.getUsername(), registerRequestDto.getEmail())) {
             throw new UserAlreadyExistsException("User already exists with username or email");
         }
+
         User user = userMapper.toUser(registerRequestDto);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         User savedUser = userRepository.save(user);
-        session.setAttribute("userId", savedUser.getUserId().toString());
-        session.setAttribute("username", savedUser.getUsername());
+        httpSession.setAttribute("user", user);
         return userMapper.toUserDto(savedUser);
     }
 
@@ -58,20 +67,29 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public UserDto getAuthenticatedUser(HttpSession session) {
-        String userId = (String) session.getAttribute("userId");
-        if (userId == null) {
-            throw new UsernameNotFoundException("User not authenticated");
+    public User getAuthenticatedUser(HttpSession session) {
+        Object userObj = session.getAttribute("user");
+
+        if (userObj == null) {
+            throw new UserNotAuthenticatedException("User not authenticated");
+        } else if (!(userObj instanceof User)) {
+            throw new UserNotAuthenticatedException("User not authenticated");
         }
-        Optional<User> userOptional = userRepository.findById(java.util.UUID.fromString(userId));
-        if (userOptional.isEmpty()) {
-            throw new UsernameNotFoundException("User not found with ID: " + userId);
-        }
-        return userMapper.toUserDto(userOptional.get());
+
+        return (User) userObj;
     }
 
+//    private User getAuthenticatedUser(HttpSession session) {
+//        User userId = (User) session.getAttribute("user");
+//        if (userId == null) {
+//            throw new UserNotAuthenticatedException("User not authenticated");
+//        }
+//        return userRepository.findById(UUID.fromString(userId))
+//                .orElseThrow(() -> new UserNotAuthenticatedException("User not found with ID: " + userId));
+//    }
+
     @Override
-    public void logout(HttpSession session) {
-        session.invalidate();
+    public void logout() {
+        httpSession.invalidate();
     }
 }

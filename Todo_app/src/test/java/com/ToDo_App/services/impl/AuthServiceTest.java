@@ -1,6 +1,5 @@
 package com.ToDo_App.services.impl;
 
-import com.ToDo_App.data.models.User;
 import com.ToDo_App.data.repository.UserRepository;
 import com.ToDo_App.dto.user.UserDto;
 import com.ToDo_App.dto.user.request.LoginRequestDto;
@@ -12,9 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -38,7 +34,7 @@ class AuthServiceTest {
         user.setFirstName("ifechukwu");
         user.setLastName("Okafor");
 
-        UserDto registerUser = authService.registerUser(user, httpSession);
+        UserDto registerUser = authService.registerUser(user);
         assertEquals(registerUser.getUsername(), user.getUsername());
     }
 
@@ -51,13 +47,13 @@ class AuthServiceTest {
         user.setFirstName("ifechukwu");
         user.setLastName("Okafor");
 
-        authService.registerUser(user, httpSession);
+        authService.registerUser(user);
 
         LoginRequestDto newUser = new LoginRequestDto();
         newUser.setUsername("macwinner");
         newUser.setPassword("12345678");
 
-        UserDto loginUser = authService.loginUser(newUser, httpSession);
+        UserDto loginUser = authService.loginUser(newUser);
         assertTrue(userRepository.findByUsername(loginUser.getUsername()).isPresent());
     }
 
