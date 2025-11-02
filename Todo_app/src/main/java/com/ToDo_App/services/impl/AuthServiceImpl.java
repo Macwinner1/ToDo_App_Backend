@@ -1,7 +1,10 @@
 package com.ToDo_App.services.impl;
 
+import com.ToDo_App.data.models.ToDo;
 import com.ToDo_App.data.models.User;
+import com.ToDo_App.data.repository.ToDoRepository;
 import com.ToDo_App.data.repository.UserRepository;
+import com.ToDo_App.dto.todo.ToDoDto;
 import com.ToDo_App.dto.user.UserDto;
 import com.ToDo_App.dto.user.request.LoginRequestDto;
 import com.ToDo_App.dto.user.request.RegisterRequestDto;
@@ -10,6 +13,7 @@ import com.ToDo_App.exceptions.UserAlreadyExistsException;
 import com.ToDo_App.exceptions.UserNotAuthenticatedException;
 import com.ToDo_App.exceptions.UsernameNotFoundException;
 import com.ToDo_App.services.AuthService;
+import com.ToDo_App.utils.mapper.ToDoMapper;
 import com.ToDo_App.utils.mapper.UserMapper;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.constraints.NotBlank;
@@ -18,17 +22,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
+    private final ToDoRepository toDoRepository;
     private final UserMapper userMapper;
     private final BCryptPasswordEncoder passwordEncoder;
     private final HttpSession httpSession;
+    private final ToDoMapper toDoMapper;
 
     @Override
     public UserDto loginUser(LoginRequestDto loginRequestDto) {
@@ -41,7 +49,16 @@ public class AuthServiceImpl implements AuthService {
             throw new UsernameNotFoundException("Invalid password");
         }
         httpSession.setAttribute("user", user);
-        return userMapper.toUserDto(user);
+        UserDto userDto = userMapper.toUserDto(user);
+
+        List<ToDo> todos = toDoRepository.findByUser(user);
+        List<ToDoDto> todoDtos = todos.stream()
+                .map(toDoMapper::toToDoDto)
+                .collect(Collectors.toList());
+
+        userDto.setToDos(todoDtos);
+
+        return userDto;
     }
 
     @Override
