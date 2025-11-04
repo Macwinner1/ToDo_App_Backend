@@ -1,12 +1,12 @@
 package com.ToDo_App.dto.user;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Size;
+import com.ToDo_App.dto.BaseResponseDto;
+import com.ToDo_App.dto.todo.ToDoDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -15,18 +15,17 @@ import java.util.UUID;
 public class UserDto {
     private UUID userId;
 
-    @NotEmpty(message = "Username cannot be empty")
-    @Size(min = 4, message = "The length of the username should be at least 4")
     private String username;
 
-    @NotEmpty(message = "First Name cannot be empty")
-    @Size(min = 2, message = "The length of the first name should be at least 2")
     private String firstName;
 
-    @Size(min = 2, message = "The length of the last name should be at least 2")
     private String lastName;
 
-    @NotEmpty(message = "Email cannot be empty")
-    @Email(message = "Invalid email format")
     private String email;
+
+    private List<ToDoDto> todos;
+
+    public void setToDos(List<ToDoDto> todos) {
+        this.todos = todos;
+    }
 }
