@@ -14,11 +14,13 @@ import com.ToDo_App.exceptions.UnauthorizedActionException;
 import com.ToDo_App.exceptions.UserNotAuthenticatedException;
 import com.ToDo_App.services.ToDoService;
 import com.ToDo_App.utils.mapper.ToDoMapper;
+import com.ToDo_App.utils.mapper.UserMapper;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -26,23 +28,16 @@ import java.util.stream.Collectors;
 @Service
 public class ToDoServiceImpl implements ToDoService {
     private final ToDoRepository toDoRepository;
-    private final UserRepository userRepository;
+    private final AuthServiceImpl authService;
     private final ToDoMapper toDoMapper;
+    private final UserMapper userMapper;
 
     @Autowired
-    public ToDoServiceImpl(ToDoRepository toDoRepository, UserRepository userRepository, ToDoMapper toDoMapper) {
+    public ToDoServiceImpl(ToDoRepository toDoRepository, UserRepository userRepository, AuthServiceImpl authService, ToDoMapper toDoMapper, UserMapper userMapper) {
         this.toDoRepository = toDoRepository;
-        this.userRepository = userRepository;
+        this.authService = authService;
         this.toDoMapper = toDoMapper;
-    }
-
-    private User getAuthenticatedUser(HttpSession session) {
-        String userId = (String) session.getAttribute("userId");
-        if (userId == null) {
-            throw new UserNotAuthenticatedException("User not authenticated");
-        }
-        return userRepository.findById(UUID.fromString(userId))
-                .orElseThrow(() -> new UserNotAuthenticatedException("User not found with ID: " + userId));
+        this.userMapper = userMapper;
     }
 
     private void checkTodoOwnership(ToDo toDo, User user) {
@@ -53,7 +48,7 @@ public class ToDoServiceImpl implements ToDoService {
 
     @Override
     public ToDoResponseDto createToDo(ToDoCreateOrUpdateRequestDto toDoCreateOrUpdateRequestDto, HttpSession session) {
-        User user = getAuthenticatedUser(session);
+        User user = authService.getAuthenticatedUser(session);
         ToDo toDo = toDoMapper.toToDo(toDoCreateOrUpdateRequestDto);
         toDo.setUser(user);
         ToDo savedToDo = toDoRepository.save(toDo);
@@ -62,7 +57,7 @@ public class ToDoServiceImpl implements ToDoService {
 
     @Override
     public ToDoResponseDto updateToDo(String toDoId, ToDoCreateOrUpdateRequestDto toDoCreateOrUpdateRequestDto, HttpSession session) {
-        User user = getAuthenticatedUser(session);
+        User user = authService.getAuthenticatedUser(session);
         ToDo toDo = toDoRepository.findById(UUID.fromString(toDoId))
                 .orElseThrow(() -> new ResourceNotFoundException("ToDo", "toDoId", toDoId));
         checkTodoOwnership(toDo, user);
@@ -79,7 +74,7 @@ public class ToDoServiceImpl implements ToDoService {
 
     @Override
     public ToDoResponseDto fetchToDoById(String toDoId, HttpSession session) {
-        User user = getAuthenticatedUser(session);
+        User user = authService.getAuthenticatedUser(session);
         ToDo toDo = toDoRepository.findById(UUID.fromString(toDoId))
                 .orElseThrow(() -> new ResourceNotFoundException("ToDo", "toDoId", toDoId));
         checkTodoOwnership(toDo, user);
@@ -88,25 +83,60 @@ public class ToDoServiceImpl implements ToDoService {
 
     @Override
     public ListToDoResponseDto fetchAllToDos(HttpSession session) {
-        User user = getAuthenticatedUser(session);
+        User user = authService.getAuthenticatedUser(session);
         List<ToDoDto> toDoDtos = toDoRepository.findByUser(user).stream()
                 .map(toDoMapper::toToDoDto)
                 .collect(Collectors.toList());
-        return new ListToDoResponseDto(HttpStatus.OK, "ToDos fetched successfully", toDoDtos);
+        return new ListToDoResponseDto(HttpStatus.OK, "ToDos fetched successfully", toDoDtos, userMapper.toUserDto(user));
     }
 
     @Override
     public ListToDoResponseDto searchTodos(Boolean completed, String keyword, HttpSession session) {
-        User user = getAuthenticatedUser(session);
-        List<ToDoDto> toDoDtos = toDoRepository.searchTodos(user, completed, keyword).stream()
+        User user = null;
+        try {
+            Object sessionUser = session.getAttribute("user");
+
+            if (sessionUser instanceof User) {
+                user = (User) sessionUser;
+            } else {
+                throw new UserNotAuthenticatedException("User session is invalid or expired.");
+            }
+        } catch (Exception e) {
+            return new ListToDoResponseDto(
+                    HttpStatus.UNAUTHORIZED,
+                    "User session not found",
+                    Collections.emptyList(),
+                    userMapper.toUserDto(user)
+            );
+        }
+
+        List<ToDo> todos = toDoRepository.searchTodos(user, completed, keyword);
+        List<ToDoDto> dtoList = todos.stream()
                 .map(toDoMapper::toToDoDto)
                 .collect(Collectors.toList());
-        return new ListToDoResponseDto(HttpStatus.OK, "ToDos fetched successfully", toDoDtos);
+
+        if (dtoList.isEmpty()) {
+            return new ListToDoResponseDto(
+                    HttpStatus.OK,
+                    "No todos found matching the criteria",
+                    dtoList,
+                    userMapper.toUserDto(user)
+            );
+        }
+
+
+        return new ListToDoResponseDto(
+                HttpStatus.OK,
+                "Todos fetched successfully",
+                dtoList,
+                userMapper.toUserDto(user)
+                // include UserDto in response
+        );
     }
 
     @Override
     public ToDoResponseDto completeToDo(String toDoId, HttpSession session) {
-        User user = getAuthenticatedUser(session);
+        User user = authService.getAuthenticatedUser(session);
         ToDo toDo = toDoRepository.findById(UUID.fromString(toDoId))
                 .orElseThrow(() -> new ResourceNotFoundException("ToDo", "toDoId", toDoId));
         checkTodoOwnership(toDo, user);
@@ -117,7 +147,7 @@ public class ToDoServiceImpl implements ToDoService {
 
     @Override
     public ToDoResponseDto incompleteToDo(String toDoId, HttpSession session) {
-        User user = getAuthenticatedUser(session);
+        User user = authService.getAuthenticatedUser(session);
         ToDo toDo = toDoRepository.findById(UUID.fromString(toDoId))
                 .orElseThrow(() -> new ResourceNotFoundException("ToDo", "toDoId", toDoId));
         checkTodoOwnership(toDo, user);
@@ -128,7 +158,7 @@ public class ToDoServiceImpl implements ToDoService {
 
     @Override
     public void deleteToDo(String toDoId, HttpSession session) {
-        User user = getAuthenticatedUser(session);
+        User user = authService.getAuthenticatedUser(session);
         ToDo toDo = toDoRepository.findById(UUID.fromString(toDoId))
                 .orElseThrow(() -> new ResourceNotFoundException("ToDo", "toDoId", toDoId));
         checkTodoOwnership(toDo, user);
@@ -137,7 +167,7 @@ public class ToDoServiceImpl implements ToDoService {
 
     @Override
     public StatsResponseDto getTodoStats(HttpSession session) {
-        User user = getAuthenticatedUser(session);
+        User user = authService.getAuthenticatedUser(session);
         long total = toDoRepository.countByUser(user);
         long completed = toDoRepository.countByUserAndCompleted(user, true);
         long pending = toDoRepository.countByUserAndCompleted(user, false);
