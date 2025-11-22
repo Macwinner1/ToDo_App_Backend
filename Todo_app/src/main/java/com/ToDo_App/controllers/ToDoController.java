@@ -1,6 +1,7 @@
 package com.ToDo_App.controllers;
 
 import com.ToDo_App.dto.BaseResponseDto;
+import com.ToDo_App.dto.todo.ToDoDto;
 import com.ToDo_App.dto.todo.request.ToDoCreateOrUpdateRequestDto;
 import com.ToDo_App.dto.todo.response.ListToDoResponseDto;
 import com.ToDo_App.dto.todo.response.StatsResponseDto;
@@ -8,13 +9,18 @@ import com.ToDo_App.dto.todo.response.ToDoResponseDto;
 import com.ToDo_App.services.ToDoService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(originPatterns = "http://localhost:*", allowCredentials = "true")
+@CrossOrigin(originPatterns = "http://localhost:5500", allowCredentials = "true")
+@Slf4j
 public class ToDoController {
     private final ToDoService toDoService;
 
@@ -44,8 +50,12 @@ public class ToDoController {
     }
 
     @GetMapping("/search")
-    public ListToDoResponseDto searchTodos(@RequestParam(required = false) Boolean completed, @RequestParam(required = false) String keyword, HttpSession session) {
-        return toDoService.searchTodos(completed, keyword, session);
+    public ResponseEntity<ListToDoResponseDto> searchTodos(
+            @RequestParam(required = false) Boolean completed,
+            @RequestParam(required = false) String keyword,
+            HttpSession session) {
+        ListToDoResponseDto response = toDoService.searchTodos(completed, keyword, session);
+        return ResponseEntity.status(response.getStatus()).body(response);
     }
 
     @PatchMapping("/{todoId}/complete")
